@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../utils/result.dart';
 
 class AIService {
   // Key is injected at build time via --dart-define=DEEPSEEK_API_KEY=<your_key>
@@ -10,14 +12,22 @@ class AIService {
   // the exposed key and makes the old commit harmless.
   static const String _apiKey = String.fromEnvironment('DEEPSEEK_API_KEY', defaultValue: '');
   static const String _apiUrl = 'https://api.deepseek.com/v1/chat/completions';
+  static const Duration _timeout = Duration(seconds: 30);
 
   /// Generate professional summary and skill suggestions based on user input.
-  Future<Map<String, dynamic>> generateResumeContent({
+  Future<Result<Map<String, dynamic>>> generateResumeContent({
     required String jobTitle,
     required String experienceYears,
     required String skillsInput,
     required String currentRole,
   }) async {
+    if (_apiKey.isEmpty) {
+      final msg = kDebugMode
+          ? 'DEEPSEEK_API_KEY is not set. Run with: flutter run --dart-define=DEEPSEEK_API_KEY=<your_key>'
+          : 'AI service is not configured. Contact support.';
+      return Result.fail(msg);
+    }
+
     final prompt = '''
 You are an expert resume writer. Based on the following information, generate:
 1. A professional summary (3-4 sentences) that highlights the candidate's strengths and aligns with the job title.
@@ -38,47 +48,58 @@ Example:
 ''';
 
     try {
-      if (_apiKey.isEmpty) {
-        throw Exception(
-          kDebugMode
-              ? 'DEEPSEEK_API_KEY is not set.\n'
-                'Run with: flutter run --dart-define=DEEPSEEK_API_KEY=<your_key>'
-              : 'AI service is not configured. Contact support.',
-        );
-      }
-      final response = await http.post(
-        Uri.parse(_apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_apiKey',
-        },
-        body: jsonEncode({
-          'model': 'deepseek-chat',
-          'messages': [
-            {
-              'role': 'system',
-              'content': 'You are a helpful assistant that generates resume content in JSON format only.',
+      final response = await http
+          .post(
+            Uri.parse(_apiUrl),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $_apiKey',
             },
-            {'role': 'user', 'content': prompt},
-          ],
-          'temperature': 0.7,
-          'max_tokens': 500,
-        }),
-      );
+            body: jsonEncode({
+              'model': 'deepseek-chat',
+              'messages': [
+                {
+                  'role': 'system',
+                  'content': 'You are a helpful assistant that generates resume content in JSON format only.',
+                },
+                {'role': 'user', 'content': prompt},
+              ],
+              'temperature': 0.7,
+              'max_tokens': 500,
+            }),
+          )
+          .timeout(_timeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final content = data['choices'][0]['message']['content'];
-        // Extract JSON from content (it might be wrapped in markdown)
+        final content = data['choices'][0]['message']['content'] as String;
+        // Extract JSON from content (it might be wrapped in markdown code fences)
         final jsonStart = content.indexOf('{');
         final jsonEnd = content.lastIndexOf('}') + 1;
-        final jsonString = content.substring(jsonStart, jsonEnd);
-        return jsonDecode(jsonString);
+        if (jsonStart == -1 || jsonEnd <= jsonStart) {
+          return Result.parseError();
+        }
+        final parsed = jsonDecode(content.substring(jsonStart, jsonEnd));
+        return Result.ok(parsed as Map<String, dynamic>);
+      } else if (response.statusCode == 429) {
+        return Result.rateLimitError();
+      } else if (response.statusCode == 401) {
+        return Result.fail(
+          kDebugMode
+              ? 'DeepSeek API key is invalid or expired (401). Check your --dart-define value.'
+              : 'AI service authentication failed. Contact support.',
+        );
       } else {
-        throw Exception('API request failed: ${response.statusCode} - ${response.body}');
+        return Result.fail(
+          'AI request failed (${response.statusCode}). Please try again.',
+        );
       }
+    } on SocketException {
+      return Result.networkError();
+    } on http.ClientException {
+      return Result.networkError();
     } catch (e) {
-      throw Exception('Failed to generate resume content: $e');
+      return Result.fail('Unexpected error. Please try again.', cause: e);
     }
   }
 }

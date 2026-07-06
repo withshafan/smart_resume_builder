@@ -3,10 +3,13 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'dart:typed_data';
 import '../models/resume.dart';
+import '../utils/result.dart';
 
 class PdfService {
-  /// Generate a PDF document from a Resume object
-  static Future<Uint8List> generateResumePdf(Resume resume) async {
+  /// Generate a PDF document from a Resume object.
+  /// Returns [Result.fail] with a user-friendly message if generation fails.
+  static Future<Result<Uint8List>> generateResumePdf(Resume resume) async {
+    try {
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -179,19 +182,35 @@ class PdfService {
       ),
     );
 
-    return pdf.save();
+      return Result.ok(await pdf.save());
+    } catch (e) {
+      return Result.fail(
+        "Couldn't generate the PDF. Make sure your resume has at least a name.",
+        cause: e,
+      );
+    }
   }
 
-  /// Share or print the PDF
-  static Future<void> sharePdf(Uint8List pdfBytes, String fileName) async {
-    await Printing.sharePdf(
-      bytes: pdfBytes,
-      filename: '$fileName.pdf',
-    );
+  /// Share or print the PDF.
+  static Future<Result<void>> sharePdf(Uint8List pdfBytes, String fileName) async {
+    try {
+      await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename: '$fileName.pdf',
+      );
+      return Result.ok(null);
+    } catch (e) {
+      return Result.fail("Couldn't share the PDF. Please try again.", cause: e);
+    }
   }
 
-  /// Print the PDF directly
-  static Future<void> printPdf(Uint8List pdfBytes) async {
-    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdfBytes);
+  /// Preview PDF in the system print dialog.
+  static Future<Result<void>> previewPdf(Uint8List pdfBytes) async {
+    try {
+      await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdfBytes);
+      return Result.ok(null);
+    } catch (e) {
+      return Result.fail("Couldn't preview the PDF. Please try again.", cause: e);
+    }
   }
 }

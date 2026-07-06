@@ -6,7 +6,6 @@ import 'ai_generate_screen.dart';
 
 class CreateResumeScreen extends StatefulWidget {
   final Resume? existingResume;
-
   const CreateResumeScreen({super.key, this.existingResume});
 
   @override
@@ -17,12 +16,12 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
   final _formKey = GlobalKey<FormState>();
   final ResumeService _resumeService = ResumeService();
 
-  final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _summaryController = TextEditingController();
-  final TextEditingController _skillsController = TextEditingController();
+  final _fullNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _summaryController = TextEditingController();
+  final _skillsController = TextEditingController();
 
   bool _isLoading = false;
   bool _isEditing = false;
@@ -42,6 +41,17 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _summaryController.dispose();
+    _skillsController.dispose();
+    super.dispose();
+  }
+
   void _applyGeneratedContent(Map<String, dynamic> content) {
     setState(() {
       if (content.containsKey('summary')) {
@@ -56,59 +66,77 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
 
   Future<void> _saveResume() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
-    try {
-      final userId = FirebaseAuth.instance.currentUser!.uid;
-      final DateTime now = DateTime.now();
-
-      final resume = Resume(
-        id: _isEditing ? widget.existingResume!.id : DateTime.now().millisecondsSinceEpoch.toString(),
-        userId: userId,
-        title: _isEditing ? widget.existingResume!.title : 'Resume - ${now.toLocal()}'.split(' ')[0],
-        fullName: _fullNameController.text.trim(),
-        email: _emailController.text.trim(),
-        phone: _phoneController.text.trim(),
-        address: _addressController.text.trim(),
-        summary: _summaryController.text.trim(),
-        skills: _skillsController.text.trim().split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList(),
-        workExperience: _isEditing ? widget.existingResume!.workExperience : [],
-        education: _isEditing ? widget.existingResume!.education : [],
-        certifications: _isEditing ? widget.existingResume!.certifications : [],
-        projects: _isEditing ? widget.existingResume!.projects : [],
-        createdAt: _isEditing ? widget.existingResume!.createdAt : now,
-        updatedAt: now,
-      );
-
-      if (_isEditing) {
-        await _resumeService.updateResume(resume);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Resume updated successfully!')),
-          );
-        }
-      } else {
-        await _resumeService.createResume(resume);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Resume created successfully!')),
-          );
-        }
-      }
-      
-      if (mounted) {
-        Navigator.pop(context, true); // return true to refresh
-      }
-    } catch (e) {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          const SnackBar(content: Text('Your session has expired. Please sign in again.')),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      setState(() => _isLoading = false);
+      return;
     }
+
+    final now = DateTime.now();
+    final resume = Resume(
+      id: _isEditing
+          ? widget.existingResume!.id
+          : now.millisecondsSinceEpoch.toString(),
+      userId: userId,
+      title: _isEditing
+          ? widget.existingResume!.title
+          : 'Resume - ${now.toLocal()}'.split(' ')[0],
+      fullName: _fullNameController.text.trim(),
+      email: _emailController.text.trim(),
+      phone: _phoneController.text.trim(),
+      address: _addressController.text.trim(),
+      summary: _summaryController.text.trim(),
+      skills: _skillsController.text
+          .trim()
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList(),
+      workExperience: _isEditing ? widget.existingResume!.workExperience : [],
+      education: _isEditing ? widget.existingResume!.education : [],
+      certifications: _isEditing ? widget.existingResume!.certifications : [],
+      projects: _isEditing ? widget.existingResume!.projects : [],
+      createdAt: _isEditing ? widget.existingResume!.createdAt : now,
+      updatedAt: now,
+    );
+
+    final result = _isEditing
+        ? await _resumeService.updateResume(resume)
+        : await _resumeService.createResume(resume);
+
+    if (!mounted) return;
+
+    result.when(
+      success: (_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isEditing
+                ? 'Resume updated successfully!'
+                : 'Resume created successfully!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.pop(context, true);
+      },
+      failure: (msg) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      },
+    );
+
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
@@ -125,35 +153,43 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
                 TextFormField(
                   controller: _fullNameController,
                   decoration: const InputDecoration(labelText: 'Full Name'),
-                  validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                  validator: (v) =>
+                      v == null || v.trim().isEmpty ? 'Full name is required' : null,
                 ),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Email'),
                   keyboardType: TextInputType.emailAddress,
                   validator: (v) {
-                    if (v?.isEmpty ?? true) return 'Required';
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v!)) {
-                      return 'Enter valid email';
+                    if (v == null || v.trim().isEmpty) return 'Email is required';
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(v.trim())) {
+                      return 'Enter a valid email address';
                     }
                     return null;
                   },
                 ),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _phoneController,
                   decoration: const InputDecoration(labelText: 'Phone'),
                   keyboardType: TextInputType.phone,
                 ),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _addressController,
                   decoration: const InputDecoration(labelText: 'Address'),
                   maxLines: 2,
                 ),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _summaryController,
-                  decoration: const InputDecoration(labelText: 'Professional Summary'),
+                  decoration:
+                      const InputDecoration(labelText: 'Professional Summary'),
                   maxLines: 4,
                 ),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _skillsController,
                   decoration: const InputDecoration(
@@ -164,7 +200,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () async {
-                    final result = await Navigator.push(
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => AIGenerateScreen(
@@ -186,9 +222,12 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed: _saveResume,
-                        child: Text(_isEditing ? 'Update Resume' : 'Save Resume', style: const TextStyle(fontSize: 18)),
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
+                        ),
+                        child: Text(
+                          _isEditing ? 'Update Resume' : 'Save Resume',
+                          style: const TextStyle(fontSize: 18),
                         ),
                       ),
               ],

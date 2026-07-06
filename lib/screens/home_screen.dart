@@ -25,18 +25,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadResumes() async {
     setState(() => _isLoading = true);
-    try {
-      final resumes = await _resumeService.getResumes();
-      setState(() => _resumes = resumes);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading resumes: ${e.toString()}')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await _resumeService.getResumes();
+    if (!mounted) return;
+    result.when(
+      success: (resumes) => setState(() => _resumes = resumes),
+      failure: (msg) => messenger.showSnackBar(
+        SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+      ),
+    );
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -48,10 +46,9 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
+              final nav = Navigator.of(context);
               await FirebaseAuth.instance.signOut();
-              if (mounted) {
-                Navigator.pushReplacementNamed(context, '/login');
-              }
+              nav.pushReplacementNamed('/login');
             },
           ),
         ],
@@ -63,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.description, size: 80, color: Colors.grey),
+                      const Icon(Icons.description_outlined, size: 80, color: Colors.grey),
                       const SizedBox(height: 16),
                       const Text(
                         'No resumes yet',
@@ -71,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Tap the + button to create your first resume',
+                        'Tap + to create your first resume',
                         style: TextStyle(color: Colors.grey.shade600),
                       ),
                     ],
@@ -86,21 +83,26 @@ class _HomeScreenState extends State<HomeScreen> {
                       margin: const EdgeInsets.symmetric(vertical: 6),
                       child: ListTile(
                         leading: CircleAvatar(
-                          child: Text(resume.fullName.isNotEmpty ? resume.fullName[0].toUpperCase() : '?'),
+                          child: Text(resume.fullName.isNotEmpty
+                              ? resume.fullName[0].toUpperCase()
+                              : '?'),
                         ),
-                        title: Text(resume.fullName.isNotEmpty ? resume.fullName : 'Untitled'),
-                        subtitle: Text('${resume.skills.take(3).join(', ')}${resume.skills.length > 3 ? '...' : ''}'),
+                        title: Text(resume.fullName.isNotEmpty
+                            ? resume.fullName
+                            : 'Untitled'),
+                        subtitle: Text(
+                          '${resume.skills.take(3).join(', ')}${resume.skills.length > 3 ? '...' : ''}',
+                        ),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () async {
-                          final result = await Navigator.push(
+                          final result = await Navigator.push<bool>(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ResumeDetailScreen(resume: resume),
+                              builder: (context) =>
+                                  ResumeDetailScreen(resume: resume),
                             ),
                           );
-                          if (result == true) {
-                            _loadResumes(); // refresh if deleted or updated
-                          }
+                          if (result == true) _loadResumes();
                         },
                       ),
                     );
@@ -108,13 +110,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final result = await Navigator.push(
+          final result = await Navigator.push<bool>(
             context,
-            MaterialPageRoute(builder: (context) => const CreateResumeScreen()),
+            MaterialPageRoute(
+                builder: (context) => const CreateResumeScreen()),
           );
-          if (result == true) {
-            _loadResumes(); // Refresh list if resume was created
-          }
+          if (result == true) _loadResumes();
         },
         child: const Icon(Icons.add),
       ),

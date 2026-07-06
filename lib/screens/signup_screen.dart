@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
+
   @override
-  _SignUpScreenState createState() => _SignUpScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
@@ -110,13 +112,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ],
             SizedBox(height: 24),
             _isLoading
-                ? CircularProgressIndicator()
+                ? const CircularProgressIndicator()
                 : ElevatedButton(
                     onPressed: _signUp,
-                    child: Text('Sign Up', style: TextStyle(fontSize: 18)),
                     style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, 50),
+                      minimumSize: const Size(double.infinity, 50),
                     ),
+                    child: const Text('Sign Up', style: TextStyle(fontSize: 18)),
                   ),
             SizedBox(height: 16),
             TextButton(
