@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shimmer/shimmer.dart';
 import '../services/resume_service.dart';
 import '../models/resume.dart';
+import '../theme/app_theme.dart';
+import '../theme/app_spacing.dart';
+import '../utils/resume_scorer.dart';
+import '../widgets/resume_card.dart';
 import 'create_resume_screen.dart';
 import 'resume_detail_screen.dart';
 
@@ -14,8 +19,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final ResumeService _resumeService = ResumeService();
-  List<Resume> _resumes = [];
+  List<Resume> _allResumes = [];
+  List<Resume> _filtered = [];
   bool _isLoading = true;
+  String _searchQuery = '';
+  String _selectedCategory = 'All';
+  String _sortBy = 'updated'; // 'updated' | 'name'
+
+  static const _categories = ['All', 'Tech', 'Design', 'Marketing', 'Finance', 'Other'];
 
   @override
   void initState() {
@@ -29,7 +40,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final result = await _resumeService.getResumes();
     if (!mounted) return;
     result.when(
-      success: (resumes) => setState(() => _resumes = resumes),
+      success: (resumes) {
+        _allResumes = resumes;
+        _applyFilters();
+      },
       failure: (msg) => messenger.showSnackBar(
         SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
       ),
@@ -37,14 +51,59 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _isLoading = false);
   }
 
+  void _applyFilters() {
+    var list = List<Resume>.from(_allResumes);
+
+    // Category filter
+    if (_selectedCategory != 'All') {
+      list = list
+          .where((r) =>
+              r.category.toLowerCase() == _selectedCategory.toLowerCase())
+          .toList();
+    }
+
+    // Search
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      list = list
+          .where((r) =>
+              r.fullName.toLowerCase().contains(q) ||
+              r.summary.toLowerCase().contains(q) ||
+              r.skills.any((s) => s.toLowerCase().contains(q)))
+          .toList();
+    }
+
+    // Sort
+    if (_sortBy == 'name') {
+      list.sort((a, b) => a.fullName.compareTo(b.fullName));
+    } else {
+      list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    }
+
+    setState(() => _filtered = list);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Smart Resume Builder'),
         actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.sort, color: Colors.white),
+            tooltip: 'Sort',
+            onSelected: (v) {
+              setState(() => _sortBy = v);
+              _applyFilters();
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'updated', child: Text('Last modified')),
+              const PopupMenuItem(value: 'name', child: Text('Name')),
+            ],
+          ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: () async {
               final nav = Navigator.of(context);
               await FirebaseAuth.instance.signOut();
@@ -53,71 +112,158 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _resumes.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.description_outlined, size: 80, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'No resumes yet',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Tap + to create your first resume',
-                        style: TextStyle(color: Colors.grey.shade600),
-                      ),
-                    ],
+      body: Column(
+        children: [
+          // ── Search bar ────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md, AppSpacing.md, AppSpacing.md, 0),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Search resumes…',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (v) {
+                _searchQuery = v;
+                _applyFilters();
+              },
+            ),
+          ),
+
+          // ── Category filter chips ─────────────────────────────────────────
+          SizedBox(
+            height: 52,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+              itemCount: _categories.length,
+              itemBuilder: (context, i) {
+                final cat = _categories[i];
+                final selected = _selectedCategory == cat;
+                final catColor = cat == 'All'
+                    ? theme.colorScheme.primary
+                    : AppColors.categoryColor(cat);
+                return Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
+                  child: FilterChip(
+                    label: Text(cat),
+                    selected: selected,
+                    onSelected: (_) {
+                      setState(() => _selectedCategory = cat);
+                      _applyFilters();
+                    },
+                    selectedColor: catColor.withAlpha(40),
+                    checkmarkColor: catColor,
+                    labelStyle: TextStyle(
+                      color: selected ? catColor : null,
+                      fontWeight:
+                          selected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                    side: selected
+                        ? BorderSide(color: catColor)
+                        : const BorderSide(color: Colors.transparent),
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(8),
-                  itemCount: _resumes.length,
-                  itemBuilder: (context, index) {
-                    final resume = _resumes[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          child: Text(resume.fullName.isNotEmpty
-                              ? resume.fullName[0].toUpperCase()
-                              : '?'),
-                        ),
-                        title: Text(resume.fullName.isNotEmpty
-                            ? resume.fullName
-                            : 'Untitled'),
-                        subtitle: Text(
-                          '${resume.skills.take(3).join(', ')}${resume.skills.length > 3 ? '...' : ''}',
-                        ),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                        onTap: () async {
-                          final result = await Navigator.push<bool>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ResumeDetailScreen(resume: resume),
-                            ),
+                );
+              },
+            ),
+          ),
+
+          // ── List ──────────────────────────────────────────────────────────
+          Expanded(
+            child: _isLoading
+                ? _buildSkeleton()
+                : _filtered.isEmpty
+                    ? _buildEmptyState(context)
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        itemCount: _filtered.length,
+                        itemBuilder: (context, index) {
+                          final resume = _filtered[index];
+                          return ResumeCard(
+                            resume: resume,
+                            score: ResumeScorer.score(resume),
+                            onTap: () async {
+                              final updated = await Navigator.push<bool>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ResumeDetailScreen(resume: resume),
+                                ),
+                              );
+                              if (updated == true) _loadResumes();
+                            },
                           );
-                          if (result == true) _loadResumes();
                         },
                       ),
-                    );
-                  },
-                ),
-      floatingActionButton: FloatingActionButton(
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          final result = await Navigator.push<bool>(
+          final created = await Navigator.push<bool>(
             context,
             MaterialPageRoute(
                 builder: (context) => const CreateResumeScreen()),
           );
-          if (result == true) _loadResumes();
+          if (created == true) _loadResumes();
         },
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('New Resume'),
+      ),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return Shimmer.fromColors(
+      baseColor: Theme.of(context).colorScheme.surface,
+      highlightColor:
+          Theme.of(context).colorScheme.onSurface.withAlpha(15),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        itemCount: 5,
+        itemBuilder: (context, _) => Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          height: 72,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.description_outlined,
+                size: 80,
+                color: theme.colorScheme.onSurface.withAlpha(60)),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              _searchQuery.isNotEmpty || _selectedCategory != 'All'
+                  ? 'No resumes match your filter'
+                  : 'No resumes yet',
+              style: theme.textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _searchQuery.isNotEmpty || _selectedCategory != 'All'
+                  ? 'Try adjusting the search or category filter.'
+                  : 'Your resumes live here. Tap "New Resume" to create your first one — it only takes a few minutes.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

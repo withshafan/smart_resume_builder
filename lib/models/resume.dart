@@ -7,6 +7,7 @@ class Resume {
   final String phone;
   final String address;
   final String summary;
+  final String category; // 'Tech', 'Design', 'Marketing', 'Finance', 'Other'
   final List<String> skills;
   final List<WorkExperience> workExperience;
   final List<Education> education;
@@ -24,6 +25,7 @@ class Resume {
     required this.phone,
     required this.address,
     required this.summary,
+    this.category = 'Other',
     required this.skills,
     required this.workExperience,
     required this.education,
@@ -42,6 +44,7 @@ class Resume {
         'phone': phone,
         'address': address,
         'summary': summary,
+        'category': category,
         'skills': skills,
         'workExperience': workExperience.map((e) => e.toJson()).toList(),
         'education': education.map((e) => e.toJson()).toList(),
@@ -60,6 +63,7 @@ class Resume {
         phone: json['phone'],
         address: json['address'],
         summary: json['summary'],
+        category: (json['category'] as String?) ?? 'Other',
         skills: List<String>.from(json['skills']),
         workExperience:
             (json['workExperience'] as List)

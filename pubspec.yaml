@@ -49,6 +49,10 @@ dependencies:
   pdf: ^3.10.9
   printing: ^5.11.1
 
+  # Design system
+  google_fonts: ^8.1.0
+  shimmer: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
