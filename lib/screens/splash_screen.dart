@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../theme/app_theme.dart';
+import '../theme/app_spacing.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,39 +18,68 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuth() async {
-    // Wait a moment for Firebase to initialize (optional)
-    await Future.delayed(const Duration(seconds: 2));
-    
-    // Listen to auth changes
-    final user = FirebaseAuth.instance.currentUser;
-    if (mounted) {
-      if (user != null) {
-        Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        Navigator.pushReplacementNamed(context, '/login');
-      }
+    // Wait for Firebase to settle, but cap at 5 seconds so a slow
+    // Firebase response doesn't hang the splash indefinitely.
+    try {
+      await FirebaseAuth.instance.authStateChanges().first.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => null, // treat timeout as signed-out
+      );
+    } catch (_) {
+      // Any error → fall back to login
     }
+
+    if (!mounted) return;
+    final nav = Navigator.of(context);
+    final user = FirebaseAuth.instance.currentUser;
+    nav.pushReplacementNamed(user != null ? '/home' : '/login');
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.auto_awesome,
-              size: 80,
-              color: Theme.of(context).primaryColor,
+            // App icon
+            Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                color: AppColors.navyLight,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                size: 52,
+                color: Colors.white,
+              ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+            const SizedBox(height: AppSpacing.lg),
+            Text(
               'Smart Resume Builder',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              style: theme.textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 10),
-            const CircularProgressIndicator(),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'AI-powered resumes in minutes',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: AppColors.navyLight,
+              ),
+            ),
           ],
         ),
       ),
