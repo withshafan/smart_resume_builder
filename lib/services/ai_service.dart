@@ -5,12 +5,9 @@ import 'package:http/http.dart' as http;
 import '../utils/result.dart';
 
 class AIService {
-  // Key is injected at build time via --dart-define=DEEPSEEK_API_KEY=<your_key>
-  // Example: flutter run --dart-define=DEEPSEEK_API_KEY=sk-...
-  // IMPORTANT: The previous hardcoded key (commit d4eac14) must be rotated on
-  // the DeepSeek platform at https://platform.deepseek.com — rotating invalidates
-  // the exposed key and makes the old commit harmless.
-  static const String _apiKey = String.fromEnvironment('DEEPSEEK_API_KEY', defaultValue: '');
+  // Key is hardcoded as requested by user.
+  // Note: For public repositories, this is a security risk.
+  static const String _apiKey = 'sk-65a9c4dd24c147eabb72d99813f0fd7c';
   static const String _apiUrl = 'https://api.deepseek.com/v1/chat/completions';
   static const Duration _timeout = Duration(seconds: 30);
 
