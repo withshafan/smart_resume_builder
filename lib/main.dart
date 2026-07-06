@@ -26,9 +26,9 @@ class MyApp extends StatelessWidget {
       initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
+        '/login': (context) => LoginScreen(),
         '/home': (context) => const HomeScreen(),
-        '/signup': (context) => const SignUpScreen(),
+        '/signup': (context) => SignUpScreen(),
       },
       onUnknownRoute: (settings) => MaterialPageRoute(
         builder: (context) => const Scaffold(

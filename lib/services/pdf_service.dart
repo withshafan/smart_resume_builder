@@ -192,6 +192,6 @@ class PdfService {
 
   /// Print the PDF directly
   static Future<void> printPdf(Uint8List pdfBytes) async {
-    await Printing.printPdf(bytes: pdfBytes);
+    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdfBytes);
   }
 }
