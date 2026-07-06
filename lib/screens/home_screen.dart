@@ -101,13 +101,6 @@ class _HomeScreenState extends State<HomeScreen> {
               const PopupMenuItem(value: 'name', child: Text('Name')),
             ],
           ),
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white),
-            tooltip: 'Settings',
-            onPressed: () {
-              Navigator.pushNamed(context, '/settings');
-            },
-          ),
         ],
       ),
       drawer: Drawer(
