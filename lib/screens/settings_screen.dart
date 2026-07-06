@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_spacing.dart';
+import '../theme/theme_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -115,16 +116,42 @@ class SettingsScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                ListTile(
-                  leading: const Icon(Icons.palette_outlined),
-                  title: const Text('Theme'),
-                  subtitle: const Text('System Default'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Theme settings coming soon.'),
-                        behavior: SnackBarBehavior.floating,
+                ValueListenableBuilder<ThemeMode>(
+                  valueListenable: themeProvider,
+                  builder: (context, currentMode, _) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.palette_outlined),
+                          const SizedBox(width: AppSpacing.md),
+                          const Text('Theme'),
+                          const Spacer(),
+                          SegmentedButton<ThemeMode>(
+                            segments: const [
+                              ButtonSegment(
+                                value: ThemeMode.light,
+                                icon: Icon(Icons.light_mode, size: 18),
+                              ),
+                              ButtonSegment(
+                                value: ThemeMode.system,
+                                icon: Icon(Icons.brightness_auto, size: 18),
+                              ),
+                              ButtonSegment(
+                                value: ThemeMode.dark,
+                                icon: Icon(Icons.dark_mode, size: 18),
+                              ),
+                            ],
+                            selected: {currentMode},
+                            onSelectionChanged: (Set<ThemeMode> newSelection) {
+                              themeProvider.setTheme(newSelection.first);
+                            },
+                            showSelectedIcon: false,
+                            style: SegmentedButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },

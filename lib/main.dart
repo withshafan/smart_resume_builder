@@ -6,6 +6,7 @@ import 'screens/home_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,25 +19,34 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Resume Builder',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
-      initialRoute: '/splash',
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeProvider,
+      builder: (context, themeMode, _) {
+        return MaterialApp(
+          title: 'Resume Builder',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
+          initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
-        '/signup': (context) => const SignUpScreen(),
-        '/settings': (context) => const SettingsScreen(),
+          routes: {
+            '/splash': (context) => const SplashScreen(),
+            '/login': (context) => const LoginScreen(),
+            '/home': (context) => const HomeScreen(),
+            '/signup': (context) => const SignUpScreen(),
+            '/settings': (context) => const SettingsScreen(),
+          },
+          onUnknownRoute: (settings) => MaterialPageRoute(
+            builder: (context) => const Scaffold(
+              body: Center(child: Text('Page not found')),
+            ),
+          ),
+        );
       },
-      onUnknownRoute: (settings) => MaterialPageRoute(
-        builder: (context) => const Scaffold(
-          body: Center(child: Text('Page not found')),
-        ),
-      ),
     );
   }
 }
