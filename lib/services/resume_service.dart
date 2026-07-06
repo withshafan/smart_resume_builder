@@ -18,7 +18,8 @@ class ResumeService {
           .doc(currentUserId)
           .collection('resumes')
           .doc(resume.id)
-          .set(resume.toJson());
+          .set(resume.toJson())
+          .timeout(const Duration(seconds: 10));
       return Result.ok(null);
     } on FirebaseException catch (e) {
       return _mapFirestoreError(e);
@@ -36,7 +37,8 @@ class ResumeService {
           .doc(currentUserId)
           .collection('resumes')
           .orderBy('updatedAt', descending: true)
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 10));
       final resumes = snapshot.docs.map((doc) => Resume.fromJson(doc.data())).toList();
       return Result.ok(resumes);
     } on FirebaseException catch (e) {

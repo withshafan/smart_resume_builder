@@ -134,11 +134,20 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
         Navigator.pop(context, true);
       },
       failure: (msg) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Theme.of(context).colorScheme.error,
+        // Log the error to the terminal so we can see it
+        debugPrint('❌ SAVE ERROR: $msg');
+        
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Error Saving Resume'),
+            content: Text('Something went wrong:\n\n$msg\n\nPlease check your internet and Firestore settings.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
           ),
         );
       },
