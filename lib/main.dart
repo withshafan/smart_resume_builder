@@ -4,6 +4,7 @@ import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/signup_screen.dart';
+import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -25,9 +26,10 @@ class MyApp extends StatelessWidget {
       initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashScreen(),
-        '/login': (context) => LoginScreen(),
+        '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
-        '/signup': (context) => SignUpScreen(),
+        '/signup': (context) => const SignUpScreen(),
+        '/settings': (context) => const SettingsScreen(),
       },
       onUnknownRoute: (settings) => MaterialPageRoute(
         builder: (context) => const Scaffold(

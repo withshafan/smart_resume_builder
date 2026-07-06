@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/resume_service.dart';
 import '../models/resume.dart';
@@ -103,11 +102,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              final nav = Navigator.of(context);
-              await FirebaseAuth.instance.signOut();
-              nav.pushReplacementNamed('/login');
+            icon: const Icon(Icons.settings, color: Colors.white),
+            tooltip: 'Settings',
+            onPressed: () {
+              Navigator.pushNamed(context, '/settings');
             },
           ),
         ],
