@@ -81,6 +81,30 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
     });
   }
 
+  Future<String?> _selectDate(BuildContext context, {String? initialValue}) async {
+    DateTime initial = DateTime.now();
+    if (initialValue != null && initialValue.isNotEmpty) {
+      final parts = initialValue.split('-');
+      if (parts.length >= 2) {
+        final y = int.tryParse(parts[0]);
+        final m = int.tryParse(parts[1]);
+        if (y != null && m != null) {
+          initial = DateTime(y, m);
+        }
+      }
+    }
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1950),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      return '${picked.year}-${picked.month.toString().padLeft(2, '0')}';
+    }
+    return null;
+  }
+
   void _showWorkExperienceDialog({int? index}) {
     final isEditing = index != null;
     final item = isEditing ? _workExperiences[index] : null;
@@ -96,32 +120,80 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(isEditing ? 'Edit Work Experience' : 'Add Work Experience'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.work_history_outlined, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: AppSpacing.sm),
+              Text(isEditing ? 'Edit Work Experience' : 'Add Work Experience', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: companyController, decoration: const InputDecoration(labelText: 'Company *')),
-                TextField(controller: positionController, decoration: const InputDecoration(labelText: 'Position *')),
-                TextField(controller: startDateController, decoration: const InputDecoration(labelText: 'Start Date (e.g. 2022-01) *')),
+                TextField(
+                  controller: companyController,
+                  decoration: const InputDecoration(labelText: 'Company *', prefixIcon: Icon(Icons.business)),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: positionController,
+                  decoration: const InputDecoration(labelText: 'Position *', prefixIcon: Icon(Icons.badge)),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: startDateController,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Start Date *',
+                    prefixIcon: Icon(Icons.calendar_today),
+                    suffixIcon: Icon(Icons.arrow_drop_down),
+                  ),
+                  onTap: () async {
+                    final date = await _selectDate(ctx, initialValue: startDateController.text);
+                    if (date != null) setDialogState(() => startDateController.text = date);
+                  },
+                ),
                 CheckboxListTile(
-                  title: const Text('Currently Work Here'),
+                  title: const Text('Currently Work Here', style: TextStyle(fontSize: 14)),
                   value: isCurrent,
+                  contentPadding: EdgeInsets.zero,
                   onChanged: (v) {
                     if (v != null) {
                       setDialogState(() => isCurrent = v);
                     }
                   },
                 ),
-                if (!isCurrent)
-                  TextField(controller: endDateController, decoration: const InputDecoration(labelText: 'End Date')),
-                TextField(controller: respController, decoration: const InputDecoration(labelText: 'Responsibilities (comma separated)')),
+                if (!isCurrent) ...[
+                  TextField(
+                    controller: endDateController,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: 'End Date',
+                      prefixIcon: Icon(Icons.calendar_today),
+                      suffixIcon: Icon(Icons.arrow_drop_down),
+                    ),
+                    onTap: () async {
+                      final date = await _selectDate(ctx, initialValue: endDateController.text);
+                      if (date != null) setDialogState(() => endDateController.text = date);
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+                TextField(
+                  controller: respController,
+                  decoration: const InputDecoration(
+                    labelText: 'Responsibilities (comma separated)',
+                    prefixIcon: Icon(Icons.list),
+                  ),
+                ),
               ],
             ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 if (companyController.text.trim().isEmpty ||
                     positionController.text.trim().isEmpty ||
@@ -175,32 +247,78 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(isEditing ? 'Edit Education' : 'Add Education'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.school_outlined, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: AppSpacing.sm),
+              Text(isEditing ? 'Edit Education' : 'Add Education', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: institutionController, decoration: const InputDecoration(labelText: 'Institution *')),
-                TextField(controller: degreeController, decoration: const InputDecoration(labelText: 'Degree *')),
-                TextField(controller: fieldController, decoration: const InputDecoration(labelText: 'Field of Study *')),
-                TextField(controller: startDateController, decoration: const InputDecoration(labelText: 'Start Date *')),
+                TextField(
+                  controller: institutionController,
+                  decoration: const InputDecoration(labelText: 'Institution *', prefixIcon: Icon(Icons.account_balance)),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: degreeController,
+                  decoration: const InputDecoration(labelText: 'Degree *', prefixIcon: Icon(Icons.school)),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: fieldController,
+                  decoration: const InputDecoration(labelText: 'Field of Study *', prefixIcon: Icon(Icons.book)),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: startDateController,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Start Date *',
+                    prefixIcon: Icon(Icons.calendar_today),
+                    suffixIcon: Icon(Icons.arrow_drop_down),
+                  ),
+                  onTap: () async {
+                    final date = await _selectDate(ctx, initialValue: startDateController.text);
+                    if (date != null) setDialogState(() => startDateController.text = date);
+                  },
+                ),
                 CheckboxListTile(
-                  title: const Text('Currently Enrolled'),
+                  title: const Text('Currently Enrolled', style: TextStyle(fontSize: 14)),
                   value: isCurrent,
+                  contentPadding: EdgeInsets.zero,
                   onChanged: (v) {
                     if (v != null) {
                       setDialogState(() => isCurrent = v);
                     }
                   },
                 ),
-                if (!isCurrent)
-                  TextField(controller: endDateController, decoration: const InputDecoration(labelText: 'End Date')),
+                if (!isCurrent) ...[
+                  TextField(
+                    controller: endDateController,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: 'End Date',
+                      prefixIcon: Icon(Icons.calendar_today),
+                      suffixIcon: Icon(Icons.arrow_drop_down),
+                    ),
+                    onTap: () async {
+                      final date = await _selectDate(ctx, initialValue: endDateController.text);
+                      if (date != null) setDialogState(() => endDateController.text = date);
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
               ],
             ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 if (institutionController.text.trim().isEmpty ||
                     degreeController.text.trim().isEmpty ||
@@ -245,46 +363,75 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(isEditing ? 'Edit Certification' : 'Add Certification'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
             children: [
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Certification Name *')),
-              TextField(controller: orgController, decoration: const InputDecoration(labelText: 'Issuing Organization *')),
-              TextField(controller: dateController, decoration: const InputDecoration(labelText: 'Issue Date *')),
+              Icon(Icons.verified_outlined, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: AppSpacing.sm),
+              Text(isEditing ? 'Edit Certification' : 'Add Certification', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () {
-              if (nameController.text.trim().isEmpty ||
-                  orgController.text.trim().isEmpty ||
-                  dateController.text.trim().isEmpty) {
-                return;
-              }
-
-              final newItem = Certification(
-                name: nameController.text.trim(),
-                issuingOrganization: orgController.text.trim(),
-                issueDate: dateController.text.trim(),
-              );
-
-              setState(() {
-                if (isEditing) {
-                  _certifications[index] = newItem;
-                } else {
-                  _certifications.add(newItem);
-                }
-              });
-              Navigator.pop(ctx);
-            },
-            child: Text(isEditing ? 'Save' : 'Add'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Certification Name *', prefixIcon: Icon(Icons.card_membership)),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: orgController,
+                  decoration: const InputDecoration(labelText: 'Issuing Organization *', prefixIcon: Icon(Icons.business)),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: dateController,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Issue Date *',
+                    prefixIcon: Icon(Icons.calendar_today),
+                    suffixIcon: Icon(Icons.arrow_drop_down),
+                  ),
+                  onTap: () async {
+                    final date = await _selectDate(ctx, initialValue: dateController.text);
+                    if (date != null) setDialogState(() => dateController.text = date);
+                  },
+                ),
+              ],
+            ),
           ),
-        ],
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.trim().isEmpty ||
+                    orgController.text.trim().isEmpty ||
+                    dateController.text.trim().isEmpty) {
+                  return;
+                }
+
+                final newItem = Certification(
+                  name: nameController.text.trim(),
+                  issuingOrganization: orgController.text.trim(),
+                  issueDate: dateController.text.trim(),
+                );
+
+                setState(() {
+                  if (isEditing) {
+                    _certifications[index] = newItem;
+                  } else {
+                    _certifications.add(newItem);
+                  }
+                });
+                Navigator.pop(ctx);
+              },
+              child: Text(isEditing ? 'Save' : 'Add'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -301,21 +448,44 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isEditing ? 'Edit Project' : 'Add Project'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.folder_special_outlined, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: AppSpacing.sm),
+            Text(isEditing ? 'Edit Project' : 'Add Project', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Project Name *')),
-              TextField(controller: descController, decoration: const InputDecoration(labelText: 'Description *')),
-              TextField(controller: linkController, decoration: const InputDecoration(labelText: 'Project Link')),
-              TextField(controller: techController, decoration: const InputDecoration(labelText: 'Technologies (comma separated)')),
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Project Name *', prefixIcon: Icon(Icons.title)),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: descController,
+                decoration: const InputDecoration(labelText: 'Description *', prefixIcon: Icon(Icons.description)),
+                maxLines: 2,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: linkController,
+                decoration: const InputDecoration(labelText: 'Project Link', prefixIcon: Icon(Icons.link)),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: techController,
+                decoration: const InputDecoration(labelText: 'Technologies (comma separated)', prefixIcon: Icon(Icons.psychology)),
+              ),
             ],
           ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               if (nameController.text.trim().isEmpty ||
                   descController.text.trim().isEmpty) {
@@ -438,6 +608,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
     required String title,
     required IconData icon,
     required List<T> items,
+    required Color accentColor,
     required VoidCallback onAdd,
     required void Function(int) onEdit,
     required void Function(int) onDelete,
@@ -451,9 +622,15 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildSectionHeader(title, icon),
+            Row(
+              children: [
+                Icon(icon, color: accentColor, size: 22),
+                const SizedBox(width: AppSpacing.sm),
+                Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              ],
+            ),
             IconButton(
-              icon: Icon(Icons.add_circle_outline, color: theme.colorScheme.primary),
+              icon: Icon(Icons.add_circle_outline, color: accentColor),
               onPressed: onAdd,
             ),
           ],
@@ -476,29 +653,65 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
             itemCount: items.length,
             itemBuilder: (context, index) {
               final item = items[index];
-              return Card(
+              return Container(
                 margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                elevation: 0,
-                color: theme.colorScheme.surfaceContainerHighest.withAlpha(60),
-                shape: RoundedRectangleBorder(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: theme.colorScheme.outline.withAlpha(20)),
+                  border: Border.all(color: theme.colorScheme.outline.withAlpha(20)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(5),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: ListTile(
-                  title: Text(getTitle(item), style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text(getSubtitle(item)),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 20),
-                        onPressed: () => onEdit(index),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete_outline, size: 20, color: theme.colorScheme.error),
-                        onPressed: () => onDelete(index),
-                      ),
-                    ],
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
+                          width: 4,
+                          color: accentColor,
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  getTitle(item),
+                                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  getSubtitle(item),
+                                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 20),
+                              onPressed: () => onEdit(index),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete_outline, size: 20, color: theme.colorScheme.error),
+                              onPressed: () => onDelete(index),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -614,6 +827,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
               title: 'Work Experience',
               icon: Icons.work_history_outlined,
               items: _workExperiences,
+              accentColor: Colors.blue,
               onAdd: _showWorkExperienceDialog,
               onEdit: (idx) => _showWorkExperienceDialog(index: idx),
               onDelete: (idx) => setState(() => _workExperiences.removeAt(idx)),
@@ -625,6 +839,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
               title: 'Education',
               icon: Icons.school_outlined,
               items: _educations,
+              accentColor: Colors.purple,
               onAdd: _showEducationDialog,
               onEdit: (idx) => _showEducationDialog(index: idx),
               onDelete: (idx) => setState(() => _educations.removeAt(idx)),
@@ -636,6 +851,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
               title: 'Certifications',
               icon: Icons.verified_outlined,
               items: _certifications,
+              accentColor: Colors.green,
               onAdd: _showCertificationDialog,
               onEdit: (idx) => _showCertificationDialog(index: idx),
               onDelete: (idx) => setState(() => _certifications.removeAt(idx)),
@@ -647,6 +863,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
               title: 'Projects',
               icon: Icons.folder_special_outlined,
               items: _projects,
+              accentColor: Colors.teal,
               onAdd: _showProjectDialog,
               onEdit: (idx) => _showProjectDialog(index: idx),
               onDelete: (idx) => setState(() => _projects.removeAt(idx)),
