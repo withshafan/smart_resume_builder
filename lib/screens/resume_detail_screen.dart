@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/resume.dart';
 import '../services/resume_service.dart';
 import '../services/pdf_service.dart';
@@ -339,6 +340,7 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
                     title: cert.name,
                     subtitle: cert.issuingOrganization,
                     trailing: cert.issueDate,
+                    fileUrl: cert.fileUrl,
                   )),
               const SizedBox(height: AppSpacing.lg),
             ],
@@ -388,6 +390,7 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
     required String title,
     required String subtitle,
     required String trailing,
+    String? fileUrl,
   }) {
     final theme = Theme.of(context);
     return Padding(
@@ -424,11 +427,37 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
               ],
             ),
             const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.primary,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    subtitle,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+                if (fileUrl != null && fileUrl.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.attachment_outlined, size: 20),
+                    tooltip: 'View Certificate',
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                    onPressed: () async {
+                      final uri = Uri.parse(fileUrl);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Could not open file link.')),
+                          );
+                        }
+                      }
+                    },
+                  ),
+              ],
             ),
           ],
         ),

@@ -53,6 +53,9 @@ dependencies:
   google_fonts: ^8.1.0
   shimmer: ^3.0.0
   shared_preferences: ^2.5.5
+  file_picker: ^11.0.2
+  firebase_storage: ^12.4.10
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

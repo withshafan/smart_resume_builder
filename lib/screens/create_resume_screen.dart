@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:file_picker/file_picker.dart' as fp;
+import 'package:firebase_storage/firebase_storage.dart';
 import '../models/resume.dart';
 import '../services/resume_service.dart';
 import '../theme/app_spacing.dart';
@@ -360,6 +363,9 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
     final nameController = TextEditingController(text: item?.name);
     final orgController = TextEditingController(text: item?.issuingOrganization);
     final dateController = TextEditingController(text: item?.issueDate);
+    String? fileUrl = item?.fileUrl;
+    String? fileName = item?.fileName;
+    bool isUploading = false;
 
     showDialog(
       context: context,
@@ -400,6 +406,98 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
                     if (date != null) setDialogState(() => dateController.text = date);
                   },
                 ),
+                const SizedBox(height: AppSpacing.md),
+                if (isUploading)
+                  const Column(
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 8),
+                      Text('Uploading certificate...', style: TextStyle(fontSize: 12)),
+                    ],
+                  )
+                else if (fileUrl != null && fileName != null)
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.secondaryContainer.withAlpha(50),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha(20)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.attach_file, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            fileName!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.cancel, color: Theme.of(context).colorScheme.error, size: 20),
+                          onPressed: () {
+                            setDialogState(() {
+                              fileUrl = null;
+                              fileName = null;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      try {
+                        final result = await fp.FilePicker.pickFiles(
+                          type: fp.FileType.custom,
+                          allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
+                        );
+                        if (result != null && result.files.isNotEmpty) {
+                          setDialogState(() => isUploading = true);
+                          final pickedFile = result.files.first;
+                          final userId = FirebaseAuth.instance.currentUser?.uid;
+                          if (userId == null) throw Exception("User not authenticated");
+
+                          final storageRef = FirebaseStorage.instance
+                              .ref()
+                              .child('users')
+                              .child(userId)
+                              .child('certifications')
+                              .child('${DateTime.now().millisecondsSinceEpoch}_${pickedFile.name}');
+
+                          UploadTask uploadTask;
+                          if (pickedFile.bytes != null) {
+                            uploadTask = storageRef.putData(pickedFile.bytes!);
+                          } else if (pickedFile.path != null) {
+                            uploadTask = storageRef.putFile(File(pickedFile.path!));
+                          } else {
+                            throw Exception("Cannot read file path or bytes");
+                          }
+
+                          final snapshot = await uploadTask;
+                          final url = await snapshot.ref.getDownloadURL();
+                          setDialogState(() {
+                            fileUrl = url;
+                            fileName = pickedFile.name;
+                            isUploading = false;
+                          });
+                        }
+                      } catch (e) {
+                        debugPrint("❌ UPLOAD ERROR: $e");
+                        setDialogState(() => isUploading = false);
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(content: Text('Failed to upload file: $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.upload_file),
+                    label: const Text('Upload Certificate (PDF/Image)'),
+                  ),
               ],
             ),
           ),
@@ -417,6 +515,8 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
                   name: nameController.text.trim(),
                   issuingOrganization: orgController.text.trim(),
                   issueDate: dateController.text.trim(),
+                  fileUrl: fileUrl,
+                  fileName: fileName,
                 );
 
                 setState(() {

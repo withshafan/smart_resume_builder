@@ -167,12 +167,16 @@ class Certification {
   final String issuingOrganization;
   final String issueDate;
   final String? expiryDate;
+  final String? fileUrl;
+  final String? fileName;
 
   Certification({
     required this.name,
     required this.issuingOrganization,
     required this.issueDate,
     this.expiryDate,
+    this.fileUrl,
+    this.fileName,
   });
 
   Map<String, dynamic> toJson() => {
@@ -180,6 +184,8 @@ class Certification {
         'issuingOrganization': issuingOrganization,
         'issueDate': issueDate,
         'expiryDate': expiryDate,
+        'fileUrl': fileUrl,
+        'fileName': fileName,
       };
 
   factory Certification.fromJson(Map<String, dynamic> json) => Certification(
@@ -187,6 +193,8 @@ class Certification {
         issuingOrganization: json['issuingOrganization'],
         issueDate: json['issueDate'],
         expiryDate: json['expiryDate'],
+        fileUrl: json['fileUrl'],
+        fileName: json['fileName'],
       );
 }
 
