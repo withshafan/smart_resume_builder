@@ -17,9 +17,19 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: Center(
-        child: Text(
-          'Welcome to Smart Resume Builder!',
-          style: TextStyle(fontSize: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Welcome to Smart Resume Builder!',
+              style: TextStyle(fontSize: 24),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Logged in as: ${FirebaseAuth.instance.currentUser?.email ?? "No email"}',
+              style: TextStyle(fontSize: 16),
+            ),
+          ],
         ),
       ),
     );
