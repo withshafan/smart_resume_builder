@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/resume.dart';
 import '../services/resume_service.dart';
+import '../theme/app_spacing.dart';
 import 'ai_generate_screen.dart';
 
 class CreateResumeScreen extends StatefulWidget {
@@ -23,8 +24,11 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
   final _summaryController = TextEditingController();
   final _skillsController = TextEditingController();
 
+  String _selectedCategory = 'Other';
   bool _isLoading = false;
   bool _isEditing = false;
+
+  static const _categories = ['Tech', 'Design', 'Marketing', 'Finance', 'Other'];
 
   @override
   void initState() {
@@ -38,6 +42,9 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
       _addressController.text = r.address;
       _summaryController.text = r.summary;
       _skillsController.text = r.skills.join(', ');
+      
+      // Ensure category is valid or fallback to Other
+      _selectedCategory = _categories.contains(r.category) ? r.category : 'Other';
     }
   }
 
@@ -93,6 +100,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
       phone: _phoneController.text.trim(),
       address: _addressController.text.trim(),
       summary: _summaryController.text.trim(),
+      category: _selectedCategory,
       skills: _skillsController.text
           .trim()
           .split(',')
@@ -139,100 +147,139 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
     if (mounted) setState(() => _isLoading = false);
   }
 
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      child: Row(
+        children: [
+          Icon(icon, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: AppSpacing.sm),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(_isEditing ? 'Edit Resume' : 'Create Resume')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          children: [
+            // ── Basic Info ──────────────────────────────────────────────────
+            _buildSectionHeader('Basic Information', Icons.person_outline),
+            TextFormField(
+              controller: _fullNameController,
+              decoration: const InputDecoration(labelText: 'Full Name *'),
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? 'Full name is required' : null,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextFormField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: 'Email *'),
+              keyboardType: TextInputType.emailAddress,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Email is required';
+                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                    .hasMatch(v.trim())) {
+                  return 'Enter a valid email address';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
               children: [
-                TextFormField(
-                  controller: _fullNameController,
-                  decoration: const InputDecoration(labelText: 'Full Name'),
-                  validator: (v) =>
-                      v == null || v.trim().isEmpty ? 'Full name is required' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Email is required';
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(v.trim())) {
-                      return 'Enter a valid email address';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: const InputDecoration(labelText: 'Phone'),
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: const InputDecoration(labelText: 'Address'),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _summaryController,
-                  decoration:
-                      const InputDecoration(labelText: 'Professional Summary'),
-                  maxLines: 4,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _skillsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Skills (comma separated)',
-                    hintText: 'Flutter, Firebase, Dart, ...',
+                Expanded(
+                  child: TextFormField(
+                    controller: _phoneController,
+                    decoration: const InputDecoration(labelText: 'Phone'),
+                    keyboardType: TextInputType.phone,
                   ),
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AIGenerateScreen(
-                          onContentGenerated: _applyGeneratedContent,
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Generate with AI'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                    backgroundColor: Colors.purple.shade100,
-                    foregroundColor: Colors.purple.shade900,
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedCategory,
+                    decoration: const InputDecoration(labelText: 'Category'),
+                    items: _categories.map((cat) {
+                      return DropdownMenuItem(
+                        value: cat,
+                        child: Text(cat),
+                      );
+                    }).toList(),
+                    onChanged: (v) {
+                      if (v != null) setState(() => _selectedCategory = v);
+                    },
                   ),
                 ),
-                const SizedBox(height: 24),
-                _isLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed: _saveResume,
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 50),
-                        ),
-                        child: Text(
-                          _isEditing ? 'Update Resume' : 'Save Resume',
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                      ),
               ],
             ),
-          ),
+            const SizedBox(height: AppSpacing.md),
+            TextFormField(
+              controller: _addressController,
+              decoration: const InputDecoration(labelText: 'Address'),
+              maxLines: 2,
+            ),
+            const Divider(height: AppSpacing.xxl),
+
+            // ── Professional Details ────────────────────────────────────────
+            _buildSectionHeader('Professional Details', Icons.work_outline),
+            TextFormField(
+              controller: _summaryController,
+              decoration: const InputDecoration(
+                labelText: 'Professional Summary',
+                alignLabelWithHint: true,
+              ),
+              maxLines: 4,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextFormField(
+              controller: _skillsController,
+              decoration: const InputDecoration(
+                labelText: 'Skills (comma separated)',
+                hintText: 'Flutter, Firebase, Dart, ...',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            OutlinedButton.icon(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AIGenerateScreen(
+                      onContentGenerated: _applyGeneratedContent,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('Generate with AI'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+
+            // ── Save Button ─────────────────────────────────────────────────
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ElevatedButton(
+                    onPressed: _saveResume,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 52),
+                    ),
+                    child: Text(
+                      _isEditing ? 'Update Resume' : 'Save Resume',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+            const SizedBox(height: AppSpacing.xl),
+          ],
         ),
       ),
     );

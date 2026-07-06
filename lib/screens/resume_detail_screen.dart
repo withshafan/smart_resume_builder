@@ -3,6 +3,10 @@ import '../models/resume.dart';
 import '../services/resume_service.dart';
 import '../services/pdf_service.dart';
 import '../utils/result.dart';
+import '../utils/resume_scorer.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_theme.dart';
+import '../widgets/score_ring.dart';
 import 'create_resume_screen.dart';
 
 class ResumeDetailScreen extends StatefulWidget {
@@ -38,8 +42,7 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text('Delete',
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.error)),
+                style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ),
         ],
       ),
@@ -102,12 +105,16 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final score = ResumeScorer.score(_resume);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_resume.title),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit Resume',
             onPressed: () async {
               final updated = await Navigator.push<bool>(
                 context,
@@ -129,99 +136,101 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
+            tooltip: 'Delete Resume',
             onPressed: _deleteResume,
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_resume.fullName,
-                style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 4),
-            Text(_resume.email),
-            if (_resume.phone.isNotEmpty) Text(_resume.phone),
-            if (_resume.address.isNotEmpty) Text(_resume.address),
-            const Divider(height: 32),
-            if (_resume.summary.isNotEmpty) ...[
-              Text('Professional Summary',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text(_resume.summary),
-              const SizedBox(height: 16),
-            ],
-            if (_resume.skills.isNotEmpty) ...[
-              Text('Skills', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children:
-                    _resume.skills.map((s) => Chip(label: Text(s))).toList(),
+            // ── Header & Score Card ─────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withAlpha(40),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(5),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-            ],
-            if (_resume.workExperience.isNotEmpty) ...[
-              Text('Work Experience',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              ..._resume.workExperience.map((exp) => Card(
-                    child: ListTile(
-                      title: Text(exp.position),
-                      subtitle: Text(exp.company),
-                      trailing: Text(
-                          '${exp.startDate} - ${exp.isCurrent ? "Present" : (exp.endDate ?? "")}'),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _resume.fullName.isNotEmpty
+                              ? _resume.fullName
+                              : 'Untitled',
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.categoryColor(_resume.category)
+                                    .withAlpha(30),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                _resume.category,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.categoryColor(_resume.category),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Text(
+                              'Updated ${_resume.updatedAt.toLocal().toString().split(' ')[0]}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  )),
-              const SizedBox(height: 16),
-            ],
-            if (_resume.education.isNotEmpty) ...[
-              Text('Education',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              ..._resume.education.map((edu) => Card(
-                    child: ListTile(
-                      title: Text(edu.degree),
-                      subtitle:
-                          Text('${edu.institution} — ${edu.fieldOfStudy}'),
-                      trailing: Text(
-                          '${edu.startDate} - ${edu.isCurrent ? "Present" : (edu.endDate ?? "")}'),
-                    ),
-                  )),
-              const SizedBox(height: 16),
-            ],
-            if (_resume.certifications.isNotEmpty) ...[
-              Text('Certifications',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              ..._resume.certifications.map((cert) => Card(
-                    child: ListTile(
-                      title: Text(cert.name),
-                      subtitle: Text(cert.issuingOrganization),
-                      trailing: Text(cert.issueDate),
-                    ),
-                  )),
-              const SizedBox(height: 16),
-            ],
-            if (_resume.projects.isNotEmpty) ...[
-              Text('Projects',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              ..._resume.projects.map((proj) => Card(
-                    child: ListTile(
-                      title: Text(proj.name),
-                      subtitle: Text(proj.description),
-                      trailing: proj.link != null
-                          ? const Icon(Icons.link)
-                          : null,
-                    ),
-                  )),
-              const SizedBox(height: 16),
-            ],
-            const Divider(),
-            const SizedBox(height: 8),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Column(
+                    children: [
+                      ScoreRing(score: score, size: 56, strokeWidth: 5),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Completeness',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+
+            // ── PDF Actions ─────────────────────────────────────────────────
             if (_pdfLoading)
               const Center(child: CircularProgressIndicator())
             else
@@ -230,21 +239,195 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => _handlePdf(share: false),
-                      icon: const Icon(Icons.preview),
+                      icon: const Icon(Icons.preview_outlined),
                       label: const Text('Preview PDF'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 48),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () => _handlePdf(share: true),
-                      icon: const Icon(Icons.share),
+                      icon: const Icon(Icons.share_outlined),
                       label: const Text('Share PDF'),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(0, 48),
+                      ),
                     ),
                   ),
                 ],
               ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xxl),
+
+            // ── Resume Content Preview ──────────────────────────────────────
+            if (_resume.email.isNotEmpty ||
+                _resume.phone.isNotEmpty ||
+                _resume.address.isNotEmpty) ...[
+              Text('Contact', style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              if (_resume.email.isNotEmpty)
+                _buildContactRow(context, Icons.email_outlined, _resume.email),
+              if (_resume.phone.isNotEmpty)
+                _buildContactRow(context, Icons.phone_outlined, _resume.phone),
+              if (_resume.address.isNotEmpty)
+                _buildContactRow(context, Icons.location_on_outlined, _resume.address),
+              const SizedBox(height: AppSpacing.xl),
+            ],
+
+            if (_resume.summary.isNotEmpty) ...[
+              Text('Professional Summary', style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                _resume.summary,
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+            ],
+
+            if (_resume.skills.isNotEmpty) ...[
+              Text('Skills', style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _resume.skills
+                    .map((s) => Chip(
+                          label: Text(s),
+                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                          side: BorderSide.none,
+                        ))
+                    .toList(),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+            ],
+
+            if (_resume.workExperience.isNotEmpty) ...[
+              Text('Work Experience', style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              ..._resume.workExperience.map((exp) => _buildExperienceCard(
+                    context,
+                    title: exp.position,
+                    subtitle: exp.company,
+                    trailing:
+                        '${exp.startDate} - ${exp.isCurrent ? "Present" : (exp.endDate ?? "")}',
+                  )),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+
+            if (_resume.education.isNotEmpty) ...[
+              Text('Education', style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              ..._resume.education.map((edu) => _buildExperienceCard(
+                    context,
+                    title: edu.degree,
+                    subtitle: '${edu.institution} — ${edu.fieldOfStudy}',
+                    trailing:
+                        '${edu.startDate} - ${edu.isCurrent ? "Present" : (edu.endDate ?? "")}',
+                  )),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+            
+            if (_resume.certifications.isNotEmpty) ...[
+              Text('Certifications', style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              ..._resume.certifications.map((cert) => _buildExperienceCard(
+                    context,
+                    title: cert.name,
+                    subtitle: cert.issuingOrganization,
+                    trailing: cert.issueDate,
+                  )),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+            
+            if (_resume.projects.isNotEmpty) ...[
+              Text('Projects', style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              ..._resume.projects.map((proj) => _buildExperienceCard(
+                    context,
+                    title: proj.name,
+                    subtitle: proj.description,
+                    trailing: proj.link != null ? 'Link provided' : '',
+                  )),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+            
+            const SizedBox(height: AppSpacing.xxl),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactRow(BuildContext context, IconData icon, String text) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExperienceCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required String trailing,
+  }) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: theme.colorScheme.outline.withAlpha(30)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                if (trailing.isNotEmpty) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    trailing,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.primary,
+              ),
+            ),
           ],
         ),
       ),
