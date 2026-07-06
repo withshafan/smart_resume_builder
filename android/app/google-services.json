@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1037977538622",
+    "project_id": "smart-resume-builder-33c54",
+    "storage_bucket": "smart-resume-builder-33c54.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1037977538622:android:42aee51cd5c80786e4416f",
+        "android_client_info": {
+          "package_name": "com.example.ai_resume_builder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZgftm8QY4w5ZtaYjuRVVypUtkIJEi-XA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
