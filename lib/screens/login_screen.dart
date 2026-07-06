@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -89,15 +90,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       minimumSize: Size(double.infinity, 50),
                     ),
                   ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () {
-                _emailController.text = 'test@internee.pk';
-                _passwordController.text = '123456';
-                _signIn();
-              },
-              child: const Text('Use Test Account', style: TextStyle(color: Colors.green)),
-            ),
+            if (kDebugMode) ...[  
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  _emailController.text = 'test@internee.pk';
+                  _passwordController.text = '123456';
+                  _signIn();
+                },
+                child: const Text('Use Test Account (Debug Only)', style: TextStyle(color: Colors.green)),
+              ),
+            ],
             const SizedBox(height: 16),
             TextButton(
               onPressed: () {
