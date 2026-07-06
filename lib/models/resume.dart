@@ -15,6 +15,7 @@ class Resume {
   final List<Project> projects;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isDeleted;
 
   Resume({
     required this.id,
@@ -33,6 +34,7 @@ class Resume {
     required this.projects,
     required this.createdAt,
     required this.updatedAt,
+    this.isDeleted = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -52,6 +54,7 @@ class Resume {
         'projects': projects.map((e) => e.toJson()).toList(),
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
+        'isDeleted': isDeleted,
       };
 
   factory Resume.fromJson(Map<String, dynamic> json) => Resume(
@@ -83,6 +86,7 @@ class Resume {
                 .toList(),
         createdAt: DateTime.parse(json['createdAt']),
         updatedAt: DateTime.parse(json['updatedAt']),
+        isDeleted: json['isDeleted'] ?? false,
       );
 }
 
