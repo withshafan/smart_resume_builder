@@ -58,34 +58,38 @@ class Resume {
       };
 
   factory Resume.fromJson(Map<String, dynamic> json) => Resume(
-        id: json['id'],
-        userId: json['userId'],
-        title: json['title'],
-        fullName: json['fullName'],
-        email: json['email'],
-        phone: json['phone'],
-        address: json['address'],
-        summary: json['summary'],
+        id: json['id'] ?? '',
+        userId: json['userId'] ?? '',
+        title: json['title'] ?? '',
+        fullName: json['fullName'] ?? '',
+        email: json['email'] ?? '',
+        phone: json['phone'] ?? '',
+        address: json['address'] ?? '',
+        summary: json['summary'] ?? '',
         category: (json['category'] as String?) ?? 'Other',
-        skills: List<String>.from(json['skills']),
+        skills: List<String>.from(json['skills'] ?? const []),
         workExperience:
-            (json['workExperience'] as List)
+            (json['workExperience'] as List? ?? const [])
                 .map((e) => WorkExperience.fromJson(e))
                 .toList(),
         education:
-            (json['education'] as List)
+            (json['education'] as List? ?? const [])
                 .map((e) => Education.fromJson(e))
                 .toList(),
         certifications:
-            (json['certifications'] as List)
+            (json['certifications'] as List? ?? const [])
                 .map((e) => Certification.fromJson(e))
                 .toList(),
         projects:
-            (json['projects'] as List)
+            (json['projects'] as List? ?? const [])
                 .map((e) => Project.fromJson(e))
                 .toList(),
-        createdAt: DateTime.parse(json['createdAt']),
-        updatedAt: DateTime.parse(json['updatedAt']),
+        createdAt: json['createdAt'] != null
+            ? DateTime.tryParse(json['createdAt']) ?? DateTime.now()
+            : DateTime.now(),
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.tryParse(json['updatedAt']) ?? DateTime.now()
+            : DateTime.now(),
         isDeleted: json['isDeleted'] ?? false,
       );
 }
@@ -117,12 +121,12 @@ class WorkExperience {
       };
 
   factory WorkExperience.fromJson(Map<String, dynamic> json) => WorkExperience(
-        company: json['company'],
-        position: json['position'],
-        startDate: json['startDate'],
+        company: json['company'] ?? '',
+        position: json['position'] ?? '',
+        startDate: json['startDate'] ?? '',
         endDate: json['endDate'],
-        isCurrent: json['isCurrent'],
-        responsibilities: List<String>.from(json['responsibilities']),
+        isCurrent: json['isCurrent'] ?? false,
+        responsibilities: List<String>.from(json['responsibilities'] ?? const []),
       );
 }
 
@@ -153,12 +157,12 @@ class Education {
       };
 
   factory Education.fromJson(Map<String, dynamic> json) => Education(
-        institution: json['institution'],
-        degree: json['degree'],
-        fieldOfStudy: json['fieldOfStudy'],
-        startDate: json['startDate'],
+        institution: json['institution'] ?? '',
+        degree: json['degree'] ?? '',
+        fieldOfStudy: json['fieldOfStudy'] ?? '',
+        startDate: json['startDate'] ?? '',
         endDate: json['endDate'],
-        isCurrent: json['isCurrent'],
+        isCurrent: json['isCurrent'] ?? false,
       );
 }
 
@@ -189,9 +193,9 @@ class Certification {
       };
 
   factory Certification.fromJson(Map<String, dynamic> json) => Certification(
-        name: json['name'],
-        issuingOrganization: json['issuingOrganization'],
-        issueDate: json['issueDate'],
+        name: json['name'] ?? '',
+        issuingOrganization: json['issuingOrganization'] ?? '',
+        issueDate: json['issueDate'] ?? '',
         expiryDate: json['expiryDate'],
         fileUrl: json['fileUrl'],
         fileName: json['fileName'],
@@ -219,9 +223,9 @@ class Project {
       };
 
   factory Project.fromJson(Map<String, dynamic> json) => Project(
-        name: json['name'],
-        description: json['description'],
-        technologies: List<String>.from(json['technologies']),
+        name: json['name'] ?? '',
+        description: json['description'] ?? '',
+        technologies: List<String>.from(json['technologies'] ?? const []),
         link: json['link'],
       );
 }
