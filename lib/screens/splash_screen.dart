@@ -46,16 +46,30 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             // App icon
             Container(
-              width: 96,
-              height: 96,
+              width: 120,
+              height: 120,
               decoration: BoxDecoration(
                 color: AppColors.navyLight,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(20),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-              child: const Icon(
-                Icons.auto_awesome,
-                size: 52,
-                color: Colors.white,
+              clipBehavior: Clip.antiAlias,
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.auto_awesome,
+                  size: 52,
+                  color: Colors.white,
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
