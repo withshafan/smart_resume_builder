@@ -1,9 +1,14 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class AIService {
-  // Replace with your actual DeepSeek API key
-  static const String _apiKey = 'sk-f154a2ee6a204a8fae309a9c73743a42';
+  // Key is injected at build time via --dart-define=DEEPSEEK_API_KEY=<your_key>
+  // Example: flutter run --dart-define=DEEPSEEK_API_KEY=sk-...
+  // IMPORTANT: The previous hardcoded key (commit d4eac14) must be rotated on
+  // the DeepSeek platform at https://platform.deepseek.com — rotating invalidates
+  // the exposed key and makes the old commit harmless.
+  static const String _apiKey = String.fromEnvironment('DEEPSEEK_API_KEY', defaultValue: '');
   static const String _apiUrl = 'https://api.deepseek.com/v1/chat/completions';
 
   /// Generate professional summary and skill suggestions based on user input.
@@ -33,6 +38,14 @@ Example:
 ''';
 
     try {
+      if (_apiKey.isEmpty) {
+        throw Exception(
+          kDebugMode
+              ? 'DEEPSEEK_API_KEY is not set.\n'
+                'Run with: flutter run --dart-define=DEEPSEEK_API_KEY=<your_key>'
+              : 'AI service is not configured. Contact support.',
+        );
+      }
       final response = await http.post(
         Uri.parse(_apiUrl),
         headers: {
