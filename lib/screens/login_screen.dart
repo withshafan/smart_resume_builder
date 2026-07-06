@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -93,10 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(height: 16),
             TextButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SignUpScreen()),
-                );
+                Navigator.pushNamed(context, '/signup');
               },
               child: Text("Don't have an account? Sign Up"),
             ),

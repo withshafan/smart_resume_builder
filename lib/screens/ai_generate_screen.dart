@@ -65,72 +65,75 @@ class _AIGenerateScreenState extends State<AIGenerateScreen> {
       appBar: AppBar(title: const Text('AI Generate Content')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Let AI help you write your resume.',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _jobTitleController,
-              decoration: const InputDecoration(
-                labelText: 'Target Job Title *',
-                border: OutlineInputBorder(),
-                hintText: 'e.g., Flutter Developer',
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _experienceController,
-              decoration: const InputDecoration(
-                labelText: 'Years of Experience',
-                border: OutlineInputBorder(),
-                hintText: 'e.g., 3 years',
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _currentRoleController,
-              decoration: const InputDecoration(
-                labelText: 'Current Role',
-                border: OutlineInputBorder(),
-                hintText: 'e.g., Junior Developer',
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _skillsController,
-              decoration: const InputDecoration(
-                labelText: 'Your Skills (comma separated)',
-                border: OutlineInputBorder(),
-                hintText: 'e.g., Flutter, Firebase, Dart',
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-            if (_errorMessage.isNotEmpty)
+        child: IgnorePointer(
+          ignoring: _isLoading,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                _errorMessage,
-                style: const TextStyle(color: Colors.red),
+                'Let AI help you write your resume.',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-            const SizedBox(height: 16),
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ElevatedButton(
-                    onPressed: _generateContent,
-                    child: const Text('Generate with AI', style: TextStyle(fontSize: 18)),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _jobTitleController,
+                decoration: const InputDecoration(
+                  labelText: 'Target Job Title *',
+                  border: OutlineInputBorder(),
+                  hintText: 'e.g., Flutter Developer',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _experienceController,
+                decoration: const InputDecoration(
+                  labelText: 'Years of Experience',
+                  border: OutlineInputBorder(),
+                  hintText: 'e.g., 3 years',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _currentRoleController,
+                decoration: const InputDecoration(
+                  labelText: 'Current Role',
+                  border: OutlineInputBorder(),
+                  hintText: 'e.g., Junior Developer',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _skillsController,
+                decoration: const InputDecoration(
+                  labelText: 'Your Skills (comma separated)',
+                  border: OutlineInputBorder(),
+                  hintText: 'e.g., Flutter, Firebase, Dart',
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 16),
+              if (_errorMessage.isNotEmpty)
+                Text(
+                  _errorMessage,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              const SizedBox(height: 16),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
+                      onPressed: _generateContent,
+                      child: const Text('Generate with AI', style: TextStyle(fontSize: 18)),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
                     ),
-                  ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-          ],
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+            ],
+          ),
         ),
       ),
     );

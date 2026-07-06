@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/resume_service.dart';
 import '../models/resume.dart';
 import 'create_resume_screen.dart';
+import 'resume_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,11 +29,13 @@ class _HomeScreenState extends State<HomeScreen> {
       final resumes = await _resumeService.getResumes();
       setState(() => _resumes = resumes);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading resumes: ${e.toString()}')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading resumes: ${e.toString()}')),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -46,6 +49,9 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
+              if (mounted) {
+                Navigator.pushReplacementNamed(context, '/login');
+              }
             },
           ),
         ],
@@ -85,8 +91,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         title: Text(resume.fullName.isNotEmpty ? resume.fullName : 'Untitled'),
                         subtitle: Text('${resume.skills.take(3).join(', ')}${resume.skills.length > 3 ? '...' : ''}'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                        onTap: () {
-                          // TODO: Navigate to resume detail/edit screen later
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ResumeDetailScreen(resume: resume),
+                            ),
+                          );
+                          if (result == true) {
+                            _loadResumes(); // refresh if deleted or updated
+                          }
                         },
                       ),
                     );

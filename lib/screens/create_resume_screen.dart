@@ -5,7 +5,9 @@ import '../services/resume_service.dart';
 import 'ai_generate_screen.dart';
 
 class CreateResumeScreen extends StatefulWidget {
-  const CreateResumeScreen({super.key});
+  final Resume? existingResume;
+
+  const CreateResumeScreen({super.key, this.existingResume});
 
   @override
   State<CreateResumeScreen> createState() => _CreateResumeScreenState();
@@ -23,6 +25,22 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
   final TextEditingController _skillsController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isEditing = widget.existingResume != null;
+    if (_isEditing) {
+      final r = widget.existingResume!;
+      _fullNameController.text = r.fullName;
+      _emailController.text = r.email;
+      _phoneController.text = r.phone;
+      _addressController.text = r.address;
+      _summaryController.text = r.summary;
+      _skillsController.text = r.skills.join(', ');
+    }
+  }
 
   void _applyGeneratedContent(Map<String, dynamic> content) {
     setState(() {
@@ -43,34 +61,44 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
 
     try {
       final userId = FirebaseAuth.instance.currentUser!.uid;
-      final String id = DateTime.now().millisecondsSinceEpoch.toString();
       final DateTime now = DateTime.now();
 
       final resume = Resume(
-        id: id,
+        id: _isEditing ? widget.existingResume!.id : DateTime.now().millisecondsSinceEpoch.toString(),
         userId: userId,
-        title: 'Resume - ${now.toLocal()}'.split(' ')[0],
+        title: _isEditing ? widget.existingResume!.title : 'Resume - ${now.toLocal()}'.split(' ')[0],
         fullName: _fullNameController.text.trim(),
         email: _emailController.text.trim(),
         phone: _phoneController.text.trim(),
         address: _addressController.text.trim(),
         summary: _summaryController.text.trim(),
         skills: _skillsController.text.trim().split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList(),
-        workExperience: [],
-        education: [],
-        certifications: [],
-        projects: [],
-        createdAt: now,
+        workExperience: _isEditing ? widget.existingResume!.workExperience : [],
+        education: _isEditing ? widget.existingResume!.education : [],
+        certifications: _isEditing ? widget.existingResume!.certifications : [],
+        projects: _isEditing ? widget.existingResume!.projects : [],
+        createdAt: _isEditing ? widget.existingResume!.createdAt : now,
         updatedAt: now,
       );
 
-      await _resumeService.createResume(resume);
+      if (_isEditing) {
+        await _resumeService.updateResume(resume);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Resume updated successfully!')),
+          );
+        }
+      } else {
+        await _resumeService.createResume(resume);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Resume created successfully!')),
+          );
+        }
+      }
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Resume created successfully!')),
-        );
-        Navigator.pop(context, true);
+        Navigator.pop(context, true); // return true to refresh
       }
     } catch (e) {
       if (mounted) {
@@ -86,7 +114,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Resume')),
+      appBar: AppBar(title: Text(_isEditing ? 'Edit Resume' : 'Create Resume')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -158,7 +186,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed: _saveResume,
-                        child: const Text('Save Resume', style: TextStyle(fontSize: 18)),
+                        child: Text(_isEditing ? 'Update Resume' : 'Save Resume', style: const TextStyle(fontSize: 18)),
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
                         ),
