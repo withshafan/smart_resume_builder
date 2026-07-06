@@ -87,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Smart Resume Builder'),
+        title: const Text('Resume Builder'),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort, color: Colors.white),

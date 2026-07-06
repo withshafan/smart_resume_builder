@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="Smart Resume Builder"
+        android:label="Resume Builder"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

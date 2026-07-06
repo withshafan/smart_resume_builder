@@ -74,7 +74,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              'Smart Resume Builder',
+              'Resume Builder',
               style: theme.textTheme.headlineSmall
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),

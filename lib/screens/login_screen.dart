@@ -133,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: AppSpacing.md),
-                  Text('Smart Resume Builder',
+                  Text('Resume Builder',
                       style: theme.textTheme.titleLarge),
                 ],
               ),
