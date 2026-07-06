@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
@@ -61,6 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = switch (e.code) {
@@ -233,19 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(fontSize: 16)),
                     ),
 
-              // Debug-only test account
-              if (kDebugMode) ...[
-                const SizedBox(height: AppSpacing.sm),
-                TextButton(
-                  onPressed: () {
-                    _emailController.text = 'test@internee.pk';
-                    _passwordController.text = '123456';
-                    _signIn();
-                  },
-                  child: const Text('Use Test Account (Debug Only)',
-                      style: TextStyle(color: Colors.green)),
-                ),
-              ],
+
 
               const SizedBox(height: AppSpacing.md),
               Row(
