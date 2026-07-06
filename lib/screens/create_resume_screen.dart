@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/resume.dart';
 import '../services/resume_service.dart';
+import 'ai_generate_screen.dart';
 
 class CreateResumeScreen extends StatefulWidget {
   const CreateResumeScreen({super.key});
@@ -14,7 +15,6 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
   final _formKey = GlobalKey<FormState>();
   final ResumeService _resumeService = ResumeService();
 
-  // Controllers
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -23,6 +23,18 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
   final TextEditingController _skillsController = TextEditingController();
 
   bool _isLoading = false;
+
+  void _applyGeneratedContent(Map<String, dynamic> content) {
+    setState(() {
+      if (content.containsKey('summary')) {
+        _summaryController.text = content['summary'] as String;
+      }
+      if (content.containsKey('skills')) {
+        final skillsList = content['skills'] as List;
+        _skillsController.text = skillsList.join(', ');
+      }
+    });
+  }
 
   Future<void> _saveResume() async {
     if (!_formKey.currentState!.validate()) return;
@@ -58,7 +70,7 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Resume created successfully!')),
         );
-        Navigator.pop(context, true); // Return true to refresh list
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
@@ -119,6 +131,26 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Skills (comma separated)',
                     hintText: 'Flutter, Firebase, Dart, ...',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AIGenerateScreen(
+                          onContentGenerated: _applyGeneratedContent,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.auto_awesome),
+                  label: const Text('Generate with AI'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                    backgroundColor: Colors.purple.shade100,
+                    foregroundColor: Colors.purple.shade900,
                   ),
                 ),
                 const SizedBox(height: 24),
