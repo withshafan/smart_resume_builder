@@ -179,7 +179,10 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
                           ),
                         ),
                         const SizedBox(height: AppSpacing.sm),
-                        Row(
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.xs,
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -198,7 +201,6 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: AppSpacing.sm),
                             Text(
                               'Updated ${_resume.updatedAt.toLocal().toString().split(' ')[0]}',
                               style: theme.textTheme.bodySmall?.copyWith(
