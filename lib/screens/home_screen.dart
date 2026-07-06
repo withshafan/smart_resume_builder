@@ -34,19 +34,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadResumes() async {
     setState(() => _isLoading = true);
-    final messenger = ScaffoldMessenger.of(context);
-    final result = await _resumeService.getResumes();
-    if (!mounted) return;
-    result.when(
-      success: (resumes) {
-        _allResumes = resumes;
-        _applyFilters();
-      },
-      failure: (msg) => messenger.showSnackBar(
-        SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
-      ),
-    );
-    setState(() => _isLoading = false);
+    try {
+      final messenger = ScaffoldMessenger.of(context);
+      final result = await _resumeService.getResumes();
+      if (!mounted) return;
+      result.when(
+        success: (resumes) {
+          _allResumes = resumes;
+          _applyFilters();
+        },
+        failure: (msg) => messenger.showSnackBar(
+          SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error loading resumes: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   void _applyFilters() {
@@ -264,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(
               _searchQuery.isNotEmpty || _selectedCategory != 'All'
                   ? 'No resumes match your filter'
-                  : 'No resumes yet',
+                  : 'Empty',
               style: theme.textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
@@ -272,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(
               _searchQuery.isNotEmpty || _selectedCategory != 'All'
                   ? 'Try adjusting the search or category filter.'
-                  : 'Your resumes live here. Tap "New Resume" to create your first one — it only takes a few minutes.',
+                  : 'Add a new resume.',
               style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
