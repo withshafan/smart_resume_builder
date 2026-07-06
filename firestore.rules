@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can only read/write their own document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Resumes are scoped strictly to the owning user.
+      // No other authenticated user can read, create, update, or delete
+      // a resume belonging to a different userId.
+      match /resumes/{resumeId} {
+        allow read, create, update, delete:
+          if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Deny all other paths by default (Firestore denies implicitly,
+    // but making it explicit prevents future path additions from
+    // accidentally inheriting a broader rule).
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
