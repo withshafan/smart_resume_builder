@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 import '../services/resume_service.dart';
 import '../models/resume.dart';
 import '../theme/app_theme.dart';
@@ -254,23 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSkeleton() {
-    return Shimmer.fromColors(
-      baseColor: Theme.of(context).colorScheme.surface,
-      highlightColor:
-          Theme.of(context).colorScheme.onSurface.withAlpha(15),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        itemCount: 5,
-        itemBuilder: (context, _) => Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          height: 72,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-    );
+    return const Center(child: CircularProgressIndicator());
   }
 
   Widget _buildEmptyState(BuildContext context) {
