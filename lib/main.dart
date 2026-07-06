@@ -5,7 +5,6 @@ import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/settings_screen.dart';
-import 'screens/trash_screen.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
 
@@ -36,7 +35,6 @@ class MyApp extends StatelessWidget {
             '/home': (context) => const HomeScreen(),
             '/signup': (context) => const SignUpScreen(),
             '/settings': (context) => const SettingsScreen(),
-            '/trash': (context) => const TrashScreen(),
           },
           onUnknownRoute: (settings) => MaterialPageRoute(
             builder: (context) => const Scaffold(

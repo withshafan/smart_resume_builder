@@ -33,8 +33,8 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Move to Trash'),
-        content: const Text('This resume will be moved to the Trash.'),
+        title: const Text('Delete Permanently'),
+        content: const Text('This resume will be permanently deleted.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -56,7 +56,7 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
       success: (_) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Moved to Trash.'),
+              content: Text('Resume deleted.'),
               behavior: SnackBarBehavior.floating),
         );
         Navigator.pop(context, true);
@@ -137,7 +137,7 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            tooltip: 'Move to Trash',
+            tooltip: 'Delete Resume',
             onPressed: _deleteResume,
           ),
         ],

@@ -130,14 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pop(context);
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline),
-              title: const Text('Trash'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/trash').then((_) => _loadResumes());
-              },
-            ),
+
             const Divider(),
             ListTile(
               leading: const Icon(Icons.settings_outlined),

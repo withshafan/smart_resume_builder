@@ -40,7 +40,7 @@ class ResumeService {
           .get()
           .timeout(const Duration(seconds: 10));
       final resumes = snapshot.docs.map((doc) => Resume.fromJson(doc.data())).toList();
-      return Result.ok(resumes.where((r) => !r.isDeleted).toList());
+      return Result.ok(resumes);
     } on FirebaseException catch (e) {
       return _mapFirestoreError(e);
     } catch (e) {
@@ -96,25 +96,6 @@ class ResumeService {
           .doc(currentUserId)
           .collection('resumes')
           .doc(resumeId)
-          .update({'isDeleted': true})
-          .timeout(const Duration(seconds: 10));
-      return Result.ok(null);
-    } on FirebaseException catch (e) {
-      return _mapFirestoreError(e);
-    } catch (e) {
-      return Result.networkError(cause: e);
-    }
-  }
-
-  /// Permanently delete a resume by ID.
-  Future<Result<void>> permanentlyDeleteResume(String resumeId) async {
-    if (currentUserId == null) return Result.authError();
-    try {
-      await _firestore
-          .collection('users')
-          .doc(currentUserId)
-          .collection('resumes')
-          .doc(resumeId)
           .delete()
           .timeout(const Duration(seconds: 10));
       return Result.ok(null);
@@ -125,44 +106,6 @@ class ResumeService {
     }
   }
 
-  /// Restore a deleted resume by ID.
-  Future<Result<void>> restoreResume(String resumeId) async {
-    if (currentUserId == null) return Result.authError();
-    try {
-      await _firestore
-          .collection('users')
-          .doc(currentUserId)
-          .collection('resumes')
-          .doc(resumeId)
-          .update({'isDeleted': false})
-          .timeout(const Duration(seconds: 10));
-      return Result.ok(null);
-    } on FirebaseException catch (e) {
-      return _mapFirestoreError(e);
-    } catch (e) {
-      return Result.networkError(cause: e);
-    }
-  }
-
-  /// Fetch all deleted resumes for the current user.
-  Future<Result<List<Resume>>> getTrashedResumes() async {
-    if (currentUserId == null) return Result.authError();
-    try {
-      final snapshot = await _firestore
-          .collection('users')
-          .doc(currentUserId)
-          .collection('resumes')
-          .orderBy('updatedAt', descending: true)
-          .get()
-          .timeout(const Duration(seconds: 10));
-      final resumes = snapshot.docs.map((doc) => Resume.fromJson(doc.data())).toList();
-      return Result.ok(resumes.where((r) => r.isDeleted).toList());
-    } on FirebaseException catch (e) {
-      return _mapFirestoreError(e);
-    } catch (e) {
-      return Result.networkError(cause: e);
-    }
-  }
 
   Result<T> _mapFirestoreError<T>(FirebaseException e) {
     return switch (e.code) {
