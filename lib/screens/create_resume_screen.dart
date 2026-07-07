@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import '../models/resume.dart';
 import '../services/resume_service.dart';
+import '../services/certificate_db_helper.dart';
 import '../theme/app_spacing.dart';
 import 'ai_generate_screen.dart';
 
@@ -458,29 +461,23 @@ class _CreateResumeScreenState extends State<CreateResumeScreen> {
                         if (result != null && result.files.isNotEmpty) {
                           setDialogState(() => isUploading = true);
                           final pickedFile = result.files.first;
-                          final userId = FirebaseAuth.instance.currentUser?.uid;
-                          if (userId == null) throw Exception("User not authenticated");
+                          if (pickedFile.path == null) throw Exception("Cannot read file path. Pick a local file.");
 
-                          final storageRef = FirebaseStorage.instance
-                              .ref()
-                              .child('users')
-                              .child(userId)
-                              .child('certifications')
-                              .child('${DateTime.now().millisecondsSinceEpoch}_${pickedFile.name}');
+                          final appDir = await getApplicationDocumentsDirectory();
+                          final uniqueName = '${DateTime.now().millisecondsSinceEpoch}_${pickedFile.name}';
+                          final localFile = File(p.join(appDir.path, uniqueName));
+                          
+                          // Copy file to local directory
+                          await File(pickedFile.path!).copy(localFile.path);
 
-                          UploadTask uploadTask;
-                          if (pickedFile.bytes != null) {
-                            uploadTask = storageRef.putData(pickedFile.bytes!);
-                          } else if (pickedFile.path != null) {
-                            uploadTask = storageRef.putFile(File(pickedFile.path!));
-                          } else {
-                            throw Exception("Cannot read file path or bytes");
-                          }
+                          // Insert into SQLite database
+                          await CertificateDbHelper.instance.insertCertificate({
+                            'fileName': pickedFile.name,
+                            'localPath': localFile.path,
+                          });
 
-                          final snapshot = await uploadTask;
-                          final url = await snapshot.ref.getDownloadURL();
                           setDialogState(() {
-                            fileUrl = url;
+                            fileUrl = 'file://${localFile.path}';
                             fileName = pickedFile.name;
                             isUploading = false;
                           });

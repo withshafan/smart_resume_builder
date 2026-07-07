@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:open_filex/open_filex.dart';
 import '../models/resume.dart';
 import '../services/resume_service.dart';
 import '../services/pdf_service.dart';
@@ -445,14 +446,24 @@ class _ResumeDetailScreenState extends State<ResumeDetailScreen> {
                     constraints: const BoxConstraints(),
                     padding: EdgeInsets.zero,
                     onPressed: () async {
-                      final uri = Uri.parse(fileUrl);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
-                      } else {
-                        if (context.mounted) {
+                      if (fileUrl.startsWith('file://')) {
+                        final localPath = fileUrl.replaceFirst('file://', '');
+                        final result = await OpenFilex.open(localPath);
+                        if (result.type != ResultType.done && context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Could not open file link.')),
+                            SnackBar(content: Text('Could not open local file: ${result.message}')),
                           );
+                        }
+                      } else {
+                        final uri = Uri.parse(fileUrl);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Could not open file link.')),
+                            );
+                          }
                         }
                       }
                     },
