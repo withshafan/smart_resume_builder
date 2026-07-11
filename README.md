@@ -37,6 +37,7 @@
 - **State Management:** Provider
 - **Key Packages:**
   - `pdf` & `printing` for document generation
+  - `fl_chart` for dynamic data visualizations and charts
   - `google_fonts` for typography
   - `shimmer` for skeleton loaders
   - `file_picker` for local file selection
