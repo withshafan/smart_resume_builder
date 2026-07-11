@@ -73,17 +73,6 @@ Ensure you have the following installed:
    flutter run
    ```
 
-## 📸 Screenshots
-
-*(Replace these with your actual app screenshots)*
-
-<div align="center">
-  <img src="https://via.placeholder.com/250x500.png?text=Login+Screen" width="200"/> &nbsp;
-  <img src="https://via.placeholder.com/250x500.png?text=Dashboard" width="200"/> &nbsp;
-  <img src="https://via.placeholder.com/250x500.png?text=Resume+Editor" width="200"/> &nbsp;
-  <img src="https://via.placeholder.com/250x500.png?text=PDF+Preview" width="200"/>
-</div>
-
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome! 
